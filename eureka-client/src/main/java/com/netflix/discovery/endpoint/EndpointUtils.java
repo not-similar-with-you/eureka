@@ -140,16 +140,28 @@ public class EndpointUtils {
         for (String zone : zones) {
             for (String zoneCname : zoneDnsNamesMap.get(zone)) {
                 List<String> ec2Urls = new ArrayList<String>(getEC2DiscoveryUrlsFromZone(zoneCname, DiscoveryUrlType.CNAME));
-                // Rearrange the list to distribute the load in case of
-                // multiple servers
+                // Rearrange the list to distribute the load in case of multiple servers
                 if (ec2Urls.size() > 1) {
                     randomizer.randomize(ec2Urls);
                 }
                 for (String ec2Url : ec2Urls) {
-                    String serviceUrl = "http://" + ec2Url + ":"
-                            + clientConfig.getEurekaServerPort()
-                            + "/" + clientConfig.getEurekaServerURLContext()
-                            + "/";
+                    StringBuilder sb = new StringBuilder()
+                            .append("http://")
+                            .append(ec2Url)
+                            .append(":")
+                            .append(clientConfig.getEurekaServerPort());
+                    if (clientConfig.getEurekaServerURLContext() != null) {
+                        if (!clientConfig.getEurekaServerURLContext().startsWith("/")) {
+                            sb.append("/");
+                        }
+                        sb.append(clientConfig.getEurekaServerURLContext());
+                        if (!clientConfig.getEurekaServerURLContext().endsWith("/")) {
+                            sb.append("/");
+                        }
+                    } else {
+                        sb.append("/");
+                    }
+                    String serviceUrl = sb.toString();
                     logger.debug("The EC2 url is {}", serviceUrl);
                     serviceUrls.add(serviceUrl);
                 }
