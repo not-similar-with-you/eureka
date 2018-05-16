@@ -177,6 +177,7 @@ public class EndpointUtils {
      */
     public static List<String> getServiceUrlsFromConfig(EurekaClientConfig clientConfig, String instanceZone, boolean preferSameZone) {
         List<String> orderedUrls = new ArrayList<String>();
+        //默认 us-east-1
         String region = getRegion(clientConfig);
         String[] availZones = clientConfig.getAvailabilityZones(clientConfig.getRegion());
         if (availZones == null || availZones.length == 0) {
@@ -336,7 +337,7 @@ public class EndpointUtils {
         }
     }
 
-    /**
+    /**Region default   eureka.client.region
      * Get the region that this particular instance is in.
      *
      * @return - The region in which the particular instance belongs to.

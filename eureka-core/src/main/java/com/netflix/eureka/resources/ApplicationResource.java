@@ -137,13 +137,14 @@ public class ApplicationResource {
      *            {@link InstanceInfo} information of the instance.
      * @param isReplication
      *            a header parameter containing information whether this is
-     *            replicated from other nodes.
+     *            replicated from other nodes.   Eureka-Server 集群复制
      */
     @POST
     @Consumes({"application/json", "application/xml"})
     public Response addInstance(InstanceInfo info,
                                 @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
         logger.debug("Registering instance {} (replication={})", info.getId(), isReplication);
+        // 校验 id hostname ip appname
         // validate that the instanceinfo contains all the necessary required fields
         if (isBlank(info.getId())) {
             return Response.status(400).entity("Missing instanceId").build();
@@ -181,8 +182,9 @@ public class ApplicationResource {
                 }
             }
         }
-
+        // 注册应用实例信息
         registry.register(info, "true".equals(isReplication));
+        // 返回 204 的响应对象
         return Response.status(204).build();  // 204 to be backwards compatible
     }
 

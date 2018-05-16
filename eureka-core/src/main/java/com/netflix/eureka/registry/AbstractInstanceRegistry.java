@@ -85,6 +85,11 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
     // CircularQueues here for debugging/statistics purposes only
     private final CircularQueue<Pair<Long, String>> recentRegisteredQueue;
+    /**
+     * 最近取消注册的调试队列
+     * key ：添加时的时间戳
+     * value ：字符串 = 应用名(应用实例信息编号)
+     */
     private final CircularQueue<Pair<Long, String>> recentCanceledQueue;
     private ConcurrentLinkedQueue<RecentlyChangedItem> recentlyChangedQueue = new ConcurrentLinkedQueue<RecentlyChangedItem>();
 
@@ -300,25 +305,34 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     protected boolean internalCancel(String appName, String id, boolean isReplication) {
         try {
             read.lock();
+            // 增加 取消注册次数 到 监控
             CANCEL.increment(isReplication);
+            // 获取 租约
             Map<String, Lease<InstanceInfo>> gMap = registry.get(appName);
             Lease<InstanceInfo> leaseToCancel = null;
             if (gMap != null) {
+                // 移除
                 leaseToCancel = gMap.remove(id);
             }
+            // 添加到 最近取消注册的调试队列
+            // 最近下线的调试队列( recentCanceledQueue )，用于 Eureka-Server 运维界面的显示，无实际业务逻辑使用
             synchronized (recentCanceledQueue) {
                 recentCanceledQueue.add(new Pair<Long, String>(System.currentTimeMillis(), appName + "(" + id + ")"));
             }
+            // 移除 应用实例覆盖状态映射
             InstanceStatus instanceStatus = overriddenInstanceStatusMap.remove(id);
             if (instanceStatus != null) {
                 logger.debug("Removed instance id {} from the overridden map which has value {}", id, instanceStatus.name());
             }
+            // 租约不存在
             if (leaseToCancel == null) {
                 CANCEL_NOT_FOUND.increment(isReplication);
                 logger.warn("DS: Registry: cancel failed because Lease is not registered for: {}/{}", appName, id);
                 return false;
             } else {
+                // 设置 租约的取消注册时间戳
                 leaseToCancel.cancel();
+                // 添加到 最近租约变更记录队列
                 InstanceInfo instanceInfo = leaseToCancel.getHolder();
                 String vip = null;
                 String svip = null;
@@ -329,6 +343,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                     vip = instanceInfo.getVIPAddress();
                     svip = instanceInfo.getSecureVipAddress();
                 }
+                // 设置 响应缓存 过期
                 invalidateCache(appName, vip, svip);
                 logger.info("Cancelled instance {}/{} (replication={})", appName, id, isReplication);
                 return true;
@@ -345,17 +360,21 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
      * @see com.netflix.eureka.lease.LeaseManager#renew(java.lang.String, java.lang.String, boolean)
      */
     public boolean renew(String appName, String id, boolean isReplication) {
+        // 增加 续租次数 到 监控
         RENEW.increment(isReplication);
+        // 获得 租约
         Map<String, Lease<InstanceInfo>> gMap = registry.get(appName);
         Lease<InstanceInfo> leaseToRenew = null;
         if (gMap != null) {
             leaseToRenew = gMap.get(id);
         }
+        // 租约不存在 直接返回失败
         if (leaseToRenew == null) {
             RENEW_NOT_FOUND.increment(isReplication);
             logger.warn("DS: Registry: lease doesn't exist, registering resource: {} - {}", appName, id);
             return false;
         } else {
+            // 获取实例对象
             InstanceInfo instanceInfo = leaseToRenew.getHolder();
             if (instanceInfo != null) {
                 // touchASGCache(instanceInfo.getASGName());
@@ -377,7 +396,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
                 }
             }
+            // 新增 续租每分钟次数
             renewsLastMin.increment();
+            // 设置 租约最后更新时间（续租）
             leaseToRenew.renew();
             return true;
         }

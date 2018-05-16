@@ -56,7 +56,9 @@ public class ApplicationInfoManager {
     };
 
     private static ApplicationInfoManager instance = new ApplicationInfoManager(null, null, null);
-
+    /**
+     * 状态变更监听器
+     */
     protected final Map<String, StatusChangeListener> listeners;
     private final InstanceStatusMapper instanceStatusMapper;
 
@@ -157,7 +159,7 @@ public class ApplicationInfoManager {
         instanceInfo.registerRuntimeMetadata(appMetadata);
     }
 
-    /**
+    /**设置应用实例信息的状态
      * Set the status of this instance. Application can use this to indicate
      * whether it is ready to receive traffic. Setting the status here also notifies all registered listeners
      * of a status change event.
@@ -190,7 +192,7 @@ public class ApplicationInfoManager {
         listeners.remove(listenerId);
     }
 
-    /**
+    /** 重新获取主机名称如果有改变 在下一次心跳时通过 eureka server 重新获取整个DataCenterInfo 信息
      * Refetches the hostname to check if it has changed. If it has, the entire
      * <code>DataCenterInfo</code> is refetched and passed on to the eureka
      * server on next heartbeat.
@@ -198,8 +200,9 @@ public class ApplicationInfoManager {
      * see {@link InstanceInfo#getHostName()} for explanation on why the hostname is used as the default address
      */
     public void refreshDataCenterInfoIfRequired() {
+        // 获取主机名
         String existingAddress = instanceInfo.getHostName();
-
+        //
         String newAddress;
         if (config instanceof RefreshableInstanceConfig) {
             // Refresh data center info, and return up to date address
@@ -207,6 +210,7 @@ public class ApplicationInfoManager {
         } else {
             newAddress = config.getHostName(true);
         }
+        // ip 地址
         String newIp = config.getIpAddress();
 
         if (newAddress != null && !newAddress.equals(existingAddress)) {
@@ -215,12 +219,17 @@ public class ApplicationInfoManager {
             // :( in the legacy code here the builder is acting as a mutator.
             // This is hard to fix as this same instanceInfo instance is referenced elsewhere.
             // We will most likely re-write the client at sometime so not fixing for now.
+            // 已原有实例信息为依据 构建 新的实例信息对象
             InstanceInfo.Builder builder = new InstanceInfo.Builder(instanceInfo);
             builder.setHostName(newAddress).setIPAddr(newIp).setDataCenterInfo(config.getDataCenterInfo());
+            // 设置服务实例信息已经改变
             instanceInfo.setIsDirty();
         }
     }
 
+    /**
+     * 如果有必要 刷新租约信息
+     */
     public void refreshLeaseInfoIfRequired() {
         LeaseInfo leaseInfo = instanceInfo.getLeaseInfo();
         if (leaseInfo == null) {

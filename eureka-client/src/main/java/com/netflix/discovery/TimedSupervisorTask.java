@@ -29,15 +29,44 @@ public class TimedSupervisorTask extends TimerTask {
     private final Counter rejectedCounter;
     private final Counter throwableCounter;
     private final LongGauge threadPoolLevelGauge;
-
+    /**
+     * 定时任务服务
+     * 定时任务服务，用于定时【发起】子任务
+     */
     private final ScheduledExecutorService scheduler;
+    /**
+     * 执行子任务线程池
+     */
     private final ThreadPoolExecutor executor;
+    /**
+     * 子任务执行超时时间
+     */
     private final long timeoutMillis;
+    /**
+     * 子任务
+     */
     private final Runnable task;
-
+    /**
+     * 当前任子务执行频率
+     */
     private final AtomicLong delay;
+    /**
+     * 最大子任务执行频率
+     *
+     * 子任务执行超时情况下使用
+     */
     private final long maxDelay;
 
+    /**
+     *
+     * @param name 任务名称
+     * @param scheduler
+     * @param executor
+     * @param timeout
+     * @param timeUnit
+     * @param expBackOffBound
+     * @param task 完成之后的回调函数
+     */
     public TimedSupervisorTask(String name, ScheduledExecutorService scheduler, ThreadPoolExecutor executor,
                                int timeout, TimeUnit timeUnit, int expBackOffBound, Runnable task) {
         this.scheduler = scheduler;
@@ -61,14 +90,18 @@ public class TimedSupervisorTask extends TimerTask {
         try {
             future = executor.submit(task);
             threadPoolLevelGauge.set((long) executor.getActiveCount());
+            // 等待任务 执行完成 或 超时
             future.get(timeoutMillis, TimeUnit.MILLISECONDS);  // block until done or timeout
+            // 设置 下一次任务执行频率
             delay.set(timeoutMillis);
             threadPoolLevelGauge.set((long) executor.getActiveCount());
         } catch (TimeoutException e) {
+            //子任务 task 执行超时，重新计算下一次执行延迟 delay
             logger.warn("task supervisor timed out", e);
             timeoutCounter.increment();
-
+            // 设置 下一次任务执行频率
             long currentDelay = delay.get();
+            //如果多次超时，超时时间不断乘以 2 ，不允许超过最大延迟时间( maxDelay )
             long newDelay = Math.min(maxDelay, currentDelay * 2);
             delay.compareAndSet(currentDelay, newDelay);
 
@@ -89,10 +122,11 @@ public class TimedSupervisorTask extends TimerTask {
 
             throwableCounter.increment();
         } finally {
+            // 取消 未完成的任务
             if (future != null) {
                 future.cancel(true);
             }
-
+            // 调度 下次任务
             if (!scheduler.isShutdown()) {
                 scheduler.schedule(this, delay.get(), TimeUnit.MILLISECONDS);
             }

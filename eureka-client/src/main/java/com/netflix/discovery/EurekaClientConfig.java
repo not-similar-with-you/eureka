@@ -54,7 +54,7 @@ import com.netflix.discovery.shared.transport.EurekaTransportConfig;
 @ImplementedBy(DefaultEurekaClientConfig.class)
 public interface EurekaClientConfig {
 
-    /**
+    /** registryFetchIntervalSeconds
      * Indicates how often(in seconds) to fetch the registry information from
      * the eureka server.
      *
@@ -448,7 +448,7 @@ public interface EurekaClientConfig {
      */
     int getEurekaConnectionIdleTimeoutSeconds();
 
-    /**
+    /** eureka.client.fetch-registry
      * Indicates whether this client should fetch eureka registry information from eureka server.
      *
      * @return {@code true} if registry information has to be fetched, {@code false} otherwise.
