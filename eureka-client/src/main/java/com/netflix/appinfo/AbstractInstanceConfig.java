@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractInstanceConfig implements EurekaInstanceConfig {
     private static final Logger logger = LoggerFactory.getLogger(AbstractInstanceConfig.class);
 
-    /**
+    /** 默认命名空间
      * @deprecated 2016-08-29 use {@link CommonConstants#DEFAULT_CONFIG_NAMESPACE}
      */
     @Deprecated
@@ -44,11 +44,22 @@ public abstract class AbstractInstanceConfig implements EurekaInstanceConfig {
     
     private static final int LEASE_EXPIRATION_DURATION_SECONDS = 90;
     private static final int LEASE_RENEWAL_INTERVAL_SECONDS = 30;
+    /**
+     * 应用 https 端口关闭
+     */
     private static final boolean SECURE_PORT_ENABLED = false;
+    /**
+     * 开启http 端口
+     */
     private static final boolean NON_SECURE_PORT_ENABLED = true;
     private static final int NON_SECURE_PORT = 80;
     private static final int SECURE_PORT = 443;
     private static final boolean INSTANCE_ENABLED_ON_INIT = false;
+    /** 运行中无法监控 ip 变化
+     * 主机信息
+     * key：主机 IP 地址
+     * value：主机名
+     */
     private static final Pair<String, String> hostInfo = getHostInfo();
     private DataCenterInfo info = new DataCenterInfo() {
         @Override

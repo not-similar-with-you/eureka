@@ -88,6 +88,7 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
         try {
             Builder resourceBuilder = jerseyClient.target(serviceUrl).path(urlPath).request();
             addExtraProperties(resourceBuilder);
+            // 子类实现
             addExtraHeaders(resourceBuilder);
             response = resourceBuilder
                     .accept(MediaType.APPLICATION_JSON)
@@ -313,6 +314,12 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
     public void shutdown() {
     }
 
+    /**
+     * 设置访问的 用户 密码
+     * jersey.config.client.http.auth.username
+     * jersey.config.client.http.auth.password
+     * @param webResource
+     */
     protected void addExtraProperties(Builder webResource) {
         if (userName != null) {
             webResource.property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_USERNAME, userName)

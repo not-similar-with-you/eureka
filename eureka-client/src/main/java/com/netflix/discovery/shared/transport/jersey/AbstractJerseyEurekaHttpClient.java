@@ -49,11 +49,13 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
         try {
             Builder resourceBuilder = jerseyClient.resource(serviceUrl).path(urlPath).getRequestBuilder();
             addExtraHeaders(resourceBuilder);
+            // post 方式发送 InstanceInfo 信息
             response = resourceBuilder
                     .header("Accept-Encoding", "gzip")
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .accept(MediaType.APPLICATION_JSON)
                     .post(ClientResponse.class, info);
+            //EurekaHttpResponseBuilder
             return anEurekaHttpResponse(response.getStatus()).headers(headersOf(response)).build();
         } finally {
             if (logger.isDebugEnabled()) {
@@ -284,6 +286,11 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
 
     protected abstract void addExtraHeaders(Builder webResource);
 
+    /**
+     * 解析头信息
+     * @param response
+     * @return
+     */
     private static Map<String, String> headersOf(ClientResponse response) {
         MultivaluedMap<String, String> jerseyHeaders = response.getHeaders();
         if (jerseyHeaders == null || jerseyHeaders.isEmpty()) {

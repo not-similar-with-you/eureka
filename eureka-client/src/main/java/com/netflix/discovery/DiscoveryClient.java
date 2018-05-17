@@ -1394,11 +1394,12 @@ public class DiscoveryClient implements EurekaClient {
         applicationInfoManager.refreshDataCenterInfoIfRequired();
         // 刷新 租约信息
         applicationInfoManager.refreshLeaseInfoIfRequired();
-        // 健康检查
+        // 枚举 健康检查 （ 在线， 下线 不可用）
         InstanceStatus status;
         try {
             status = getHealthCheckHandler().getStatus(instanceInfo.getStatus());
         } catch (Exception e) {
+            // 获取服务实例状态异常 直接设置服务状态为下线
             logger.warn("Exception from healthcheckHandler.getStatus, setting status to DOWN", e);
             status = InstanceStatus.DOWN;
         }

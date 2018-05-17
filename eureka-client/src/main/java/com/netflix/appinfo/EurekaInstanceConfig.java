@@ -63,7 +63,7 @@ public interface EurekaInstanceConfig {
      */
     String getAppGroupName();
 
-    /**
+    /** 初始化后是否开启
      * Indicates whether the instance should be enabled for taking traffic as
      * soon as it is registered with eureka. Sometimes the application might
      * need to do some pre-processing before it is ready to take traffic.
@@ -90,7 +90,7 @@ public interface EurekaInstanceConfig {
      */
     int getSecurePort();
 
-    /**
+    /** 应用 http 端口是否开启
      * Indicates whether the <code>non-secure</code> port should be enabled for
      * traffic or not.
      *
@@ -107,7 +107,7 @@ public interface EurekaInstanceConfig {
      */
     boolean getSecurePortEnabled();
 
-    /**
+    /** 租约续约频率，单位：秒
      * Indicates how often (in seconds) the eureka client needs to send
      * heartbeats to eureka server to indicate that it is still alive. If the
      * heartbeats are not received for the period specified in
@@ -124,7 +124,7 @@ public interface EurekaInstanceConfig {
      */
     int getLeaseRenewalIntervalInSeconds();
 
-    /**
+    /** 契约过期时间，单位：秒
      * Indicates the time in seconds that the eureka server waits since it
      * received the last heartbeat before it can remove this instance from its
      * view and there by disallowing traffic to this instance.
@@ -367,7 +367,7 @@ public interface EurekaInstanceConfig {
      */
     String[] getDefaultAddressResolutionOrder();
 
-    /**
+    /** 配置命名空间，默认使用 eureka
      * Get the namespace used to find properties.
      * @return the namespace used to find properties.
      */
